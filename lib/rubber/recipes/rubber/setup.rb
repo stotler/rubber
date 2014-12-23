@@ -34,6 +34,9 @@ namespace :rubber do
     setup_volumes
     setup_gem_sources
     install_gems
+
+    setup_local_aliases
+
     deploy.setup
   end
 
