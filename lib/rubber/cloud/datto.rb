@@ -18,6 +18,7 @@ module Rubber
 
       def create_instance(instance_alias, image_name, image_type, security_groups, availability_zone, datacenter)
         response = HttpAdapter.post(uri_builder)
+        puts "API RESPONSE #{response.code}: #{response.body}"
         if response.code != 200
           raise err_from_response(response)
         end
