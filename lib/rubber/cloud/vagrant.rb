@@ -14,13 +14,14 @@ module Rubber
 
       def before_create_instance(instance_alias, role_names)
         unless ENV.has_key?('RUN_FROM_VAGRANT')
-          capistrano.fatal "Since you are using the 'vagrant' provider, you must create instances by running `vagrant up #{instance_alias}`."
+          start_cmd = "vagrant up #{instance_alias}"
+          capistrano.logger.info("Starting instance using: #{start_cmd}")
+          system(start_cmd)
         end
       end
 
       def describe_instances(instance_id=nil)
         output = `vagrant status #{instance_id}`
-
         output =~ /#{instance_id}\s+(\w+)/m
         state = $1
 
@@ -48,16 +49,22 @@ module Rubber
       def destroy_instance(instance_id)
         # If it's being run from vagrant, then 'vagrant destroy' must have been called already, so no need for us to do it.
         unless ENV.has_key?('RUN_FROM_VAGRANT')
-          system("vagrant destroy #{instance_id} --force")
+          cmd = "vagrant destroy #{instance_id} --force"
+          capistrano.logger.info("Destroying instance using: #{cmd}")
+          system(cmd)
         end
       end
 
       def stop_instance(instance, force=false)
-        system("vagrant suspend #{instance.instance_id}")
+        cmd = "vagrant suspend #{instance.instance_id}"
+        capistrano.logger.info("Stopping instance using: #{cmd}")
+        system(cmd)
       end
 
       def start_instance(instance)
-        system("vagrant resume #{instance.instance_id}")
+        cmd = "vagrant resume #{instance.instance_id}"
+        capistrano.logger.info("Starting existing instance using: #{cmd}")
+        system(cmd)
       end
     end
   end
