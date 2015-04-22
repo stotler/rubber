@@ -19,7 +19,7 @@ module Rubber
       def create_instance(instance_alias, image_name, image_type, security_groups, availability_zone, datacenter)
         response = HttpAdapter.post(uri_builder)
         puts "API RESPONSE #{response.code}: #{response.body}"
-        if response.code != 200
+        if successful?(response)
           raise err_from_response(response)
         end
 
@@ -30,7 +30,7 @@ module Rubber
         instances = []
         if instance_id.nil?
           response = HttpAdapter.get(uri_builder)
-          if response.code != 200
+          if successful?(response)
             raise err_from_response(response)
           end
 
@@ -39,7 +39,7 @@ module Rubber
           end
         else
           response = HttpAdapter.get(uri_builder(instance_id))
-          if response.code != 200
+          if successful?(response)
             raise err_from_response(response)
           end
 
@@ -50,7 +50,7 @@ module Rubber
 
       def destroy_instance(instance_id)
         response = HttpAdapter.delete(uri_builder(instance_id))
-        if response.code != 200
+        if successful?(response)
           raise err_from_response(response)
         end
         response
@@ -75,6 +75,10 @@ module Rubber
       # @return [StandardError]
       def err_from_response(response)
         StandardError.new(response["result"] || "Unexpected Response Code #{response.code}")
+      end
+
+      def successful?(response)
+        (200..299).include?(response.code)
       end
 
       # Creates the uri from the specified path and the configured endpoint.
