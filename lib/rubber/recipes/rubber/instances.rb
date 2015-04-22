@@ -395,7 +395,7 @@ namespace :rubber do
 
       # Enable root ssh access via key
       # However, current Backupify vagrant setup already does this so we skip it in that case
-      if instance_item.linux? && (instance_item.provider != 'vagrant' || !fetch(:initial_ssh_user))
+      if instance_item.linux? && (instance_item.provider != 'vagrant' || !fetch(:initial_ssh_user, false))
         # weird cap/netssh bug, sometimes just hangs forever on initial connect, so force a timeout
         begin
           Timeout::timeout(30) do
