@@ -16,10 +16,6 @@ module Rubber
         'stopped'
       end
 
-      def setup_security_groups(host=nil, roles=[])
-        # Make this a no-op since they're getting in the way on Datto guests which aren't directly accessible from the internet
-      end
-
       def create_instance(instance_alias, image_name, image_type, security_groups, availability_zone, datacenter)
         response = HttpAdapter.post(uri_builder)
         puts "API RESPONSE #{response.code}: #{response.body}"
