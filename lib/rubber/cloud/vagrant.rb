@@ -90,7 +90,7 @@ module Rubber
         else
           system(cmd)
         end
-      endv  q
+      end
 
       def setup_vagrant_instance(instance_alias, state)
         instance = {}
@@ -120,7 +120,7 @@ module Rubber
       def instance_external_ip(instance_id)
         return nil if instance_id.empty?
         capistrano.logger.info("Getting Vagrant instance external IP")
-        ips = run_vagrant_command(instance_id, 'ssh', "-c 'ifconfig | awk \"/inet addr/{print substr(\\$2,6)}\"' 2> /dev/null", true)
+        ips = run_vagrant_command('ssh', instance_id, "-c 'ifconfig | awk \"/inet addr/{print substr(\\$2,6)}\"' 2> /dev/null", true)
         ips = ips.split(/\r?\n/) # split on CRLF or LF
         if ips.empty? 
           capistrano.logger.error("Unable to retrieve IP addresses from Vagrant instance")
