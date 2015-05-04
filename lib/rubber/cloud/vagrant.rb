@@ -74,8 +74,8 @@ module Rubber
             instance_id = instance.instance_id
           end
 
-          if instance[:provider_options] && instance[:provider_options][:vagrant_cwd]
-            cmd = "VAGRANT_CWD=#{instance[:provider_options][:vagrant_cwd]} " + cmd
+          if instance && instance.provider_options && instance.provider_options[:vagrant_cwd]
+            cmd = "VAGRANT_CWD=#{instance.provider_options[:vagrant_cwd]} " + cmd
           end
 
           cmd += " " + instance_id
