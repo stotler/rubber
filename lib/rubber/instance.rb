@@ -201,7 +201,7 @@ module Rubber
       attr_accessor :internal_host, :internal_ip
       attr_accessor :static_ip, :volumes, :partitions, :root_device_type
       attr_accessor :spot_instance_request_id
-      attr_accessor :provider, :platform
+      attr_accessor :provider, :provider_options, :platform
       attr_accessor :vpc_id, :subnet_id, :tenancy
       attr_accessor :subnet_type
 

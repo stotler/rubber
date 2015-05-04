@@ -61,8 +61,26 @@ module Rubber
 
       private
 
-      def run_vagrant_command(subcmd, instance_id = nil, args = "", return_result = false)
-        cmd = "vagrant #{subcmd} #{instance_id}"
+      def run_vagrant_command(subcmd, instance_or_id = nil, args = "", return_result = false)
+        cmd = "vagrant #{subcmd}"
+
+        # Setup instance id and VAGRANT_CWD
+        if instance_or_id
+          if instance_or_id.kind_of?(String)
+            instance_id = instance_or_id
+            instance = Rubber.instances[instance_or_id]
+          else
+            instance = instance_or_id
+            instance_id = instance.instance_id
+          end
+
+          if instance[:provider_options] && instance[:provider_options][:vagrant_cwd]
+            cmd = "VAGRANT_CWD=#{instance[:provider_options][:vagrant_cwd]} " + cmd
+          end
+
+          cmd += " " + instance_id
+        end
+
         cmd += " #{args}" unless args.empty?
 
         capistrano.logger.info("Running '#{cmd}'")
@@ -72,7 +90,7 @@ module Rubber
         else
           system(cmd)
         end
-      end
+      endv  q
 
       def setup_vagrant_instance(instance_alias, state)
         instance = {}
@@ -80,6 +98,12 @@ module Rubber
         instance[:state] = state
         instance[:provider] = 'vagrant'
         instance[:platform] = Rubber::Platforms::LINUX
+
+        if ENV.has_key?('VAGRANT_CWD')
+          instance[:provider_options] ||= {}
+          instance[:provider_options][:vagrant_cwd] = ENV['VAGRANT_CWD']
+        end
+
         # IP addresses
         ip = instance_external_ip(instance_alias)
         if ! ip.empty?
