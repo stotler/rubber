@@ -62,26 +62,17 @@ module Rubber
       private
 
       def run_vagrant_command(subcmd, instance_or_id = nil, args = "", return_result = false)
-        cmd = "vagrant #{subcmd}"
+        # Parse instance_or_id
+        instance = instance_or_id.kind_of?(String) ? Rubber.instances[instance_or_id] : instance_or_id
+        id = instance ? instance.instance_id : instance_or_id
+        vagrant_cwd = get_vagrant_cwd(instance)
 
-        # Setup instance id and VAGRANT_CWD
-        if instance_or_id
-          if instance_or_id.kind_of?(String)
-            instance_id = instance_or_id
-            instance = Rubber.instances[instance_or_id]
-          else
-            instance = instance_or_id
-            instance_id = instance.instance_id
-          end
-
-          if instance && instance.provider_options && instance.provider_options[:vagrant_cwd]
-            cmd = "VAGRANT_CWD=#{instance.provider_options[:vagrant_cwd]} " + cmd
-          end
-
-          cmd += " " + instance_id
-        end
-
-        cmd += " #{args}" unless args.empty?
+        # Build command 'VAGRANT_CWD=<cwd> vagrant <subcmd> <id> <args>'
+        cmd = ''
+        cmd += "VAGRANT_CWD=#{vagrant_cwd} " if vagrant_cwd
+        cmd += 'vagrant ' + subcmd
+        cmd += ' ' + id if id
+        cmd += ' ' + args unless args.empty?
 
         capistrano.logger.info("Running '#{cmd}'")
 
@@ -90,6 +81,13 @@ module Rubber
         else
           system(cmd)
         end
+      end
+
+      def get_vagrant_cwd(instance)
+        return nil unless instance && instance.respond_to?(:provider_options) && instance.provider_options
+        cwd = instance.provider_options[:vagrant_cwd]
+        return nil if cwd && cwd.empty?
+        cwd
       end
 
       def setup_vagrant_instance(instance_alias, state)
