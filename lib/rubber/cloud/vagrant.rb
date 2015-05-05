@@ -24,9 +24,11 @@ module Rubber
       end
 
       def describe_instances(instance_id=nil)
-        output = run_vagrant_command('status', instance_id, '', true)
-        output =~ /#{instance_id}\s+(\w+)/m
-        state = $1
+        state = ''
+        run_vagrant_command('status', instance_id, '') do |output|
+          output =~ /#{instance_id}\s+(\w+)/m
+          state = $1
+        end
 
         if Generic.instances
           Generic.instances.each do |instance|
@@ -61,7 +63,8 @@ module Rubber
 
       private
 
-      def run_vagrant_command(subcmd, instance_or_id = nil, args = "", return_result = false)
+      # Wrapper for running and logging vagrant comments.
+      def run_vagrant_command(subcmd, instance_or_id = nil, args = "")
         # Parse instance_or_id
         instance = instance_or_id.kind_of?(String) ? Rubber.instances[instance_or_id] : instance_or_id
         id = instance ? instance.instance_id : instance_or_id
@@ -76,13 +79,14 @@ module Rubber
 
         capistrano.logger.info("Running '#{cmd}'")
 
-        if return_result
-          `#{cmd}`
+        if block_given?
+          yield `#{cmd}`
         else
           system(cmd)
         end
       end
 
+      # Returns the value of the VAGRANT_CWD setting from the rubber configuration
       def get_vagrant_cwd(instance)
         return nil unless instance && instance.respond_to?(:provider_options) && instance.provider_options
         cwd = instance.provider_options[:vagrant_cwd]
@@ -90,6 +94,7 @@ module Rubber
         cwd
       end
 
+      # Creates a hash with the properties for a vagrant instance
       def setup_vagrant_instance(instance_alias, state)
         instance = {}
         instance[:id] = instance_alias
@@ -115,24 +120,27 @@ module Rubber
         instance
       end
 
+      # Returns the Vagrant instance's external IP address
       def instance_external_ip(instance_id)
-        return nil if instance_id.empty?
+        return nil unless instance_id && !instance_id.empty?
         capistrano.logger.info("Getting Vagrant instance external IP")
-        ips = run_vagrant_command('ssh', instance_id, "-c 'ifconfig | awk \"/inet addr/{print substr(\\$2,6)}\"' 2> /dev/null", true)
-        ips = ips.split(/\r?\n/) # split on CRLF or LF
-        if ips.empty? 
-          capistrano.logger.error("Unable to retrieve IP addresses from Vagrant instance")
-          nil
-        else
-          original_ips = ips.dup
-          ips.delete_if { |x| /^127\./.match(x) }  # Delete the loopback address
-          ips.delete_if { |x| /^192\.168\.12/.match(x) }  # Delete the internally assigned Vagrant address: 192.168.12X.X
+        get_ips_cmd = "'ifconfig | awk \"/inet addr/{print substr(\\$2,6)}\"'"
+        run_vagrant_command('ssh', instance_id, "-c #{get_ips_cmd} 2> /dev/null") do |ips|
+          ips = ips.split(/\r?\n/) # split on CRLF or LF
           if ips.empty?
-            capistrano.logger.error("Vagrant instance doesn't appear to have an external IP address. IPs found are: #{original_ips.join(', ')}")
+            capistrano.logger.error("Unable to retrieve IP addresses from Vagrant instance")
             nil
           else
-            capistrano.logger.info("The vagrant instance 'external' IP is #{ips.first}")
-            ips.first
+            original_ips = ips.dup
+            ips.delete_if { |x| /^127\./.match(x) }  # Delete the loopback address
+            ips.delete_if { |x| /^192\.168\.12/.match(x) }  # Delete the internally assigned Vagrant address: 192.168.12X.X
+            if ips.empty?
+              capistrano.logger.error("Vagrant instance doesn't appear to have an external IP address. IPs found are: #{original_ips.join(', ')}")
+              nil
+            else
+              capistrano.logger.info("The vagrant instance 'external' IP is #{ips.first}")
+              ips.first
+            end
           end
         end
       end
