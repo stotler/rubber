@@ -78,8 +78,6 @@ module Rubber
         end
       end
 
-      #private
-
       def self.persist_database(database, database_file)
         File.open(database_file + ".tmp", "w") do |f|
           f.write(::YAML.dump(database))
