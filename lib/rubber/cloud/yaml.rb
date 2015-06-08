@@ -73,7 +73,7 @@ module Rubber
       end
 
       class Instance < Struct.new(:id, :state, :datacenter, :external_ip, :internal_ip, :platform, :provider)
-        def initialize(id, state, datacenter, external_ip, internal_ip, platform, prodiver)
+        def initialize(id, state, datacenter, external_ip, internal_ip, platform, provider)
           super(id, state || AVAILABLE, datacenter, external_ip, internal_ip, platform, provider)
         end
       end
