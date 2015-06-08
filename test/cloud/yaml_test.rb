@@ -22,6 +22,11 @@ class YAMLTest < Test::Unit::TestCase
       Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
 
       assert_equal db.first.id, @cloud.create_instance('', '', '', '', '', '')
+      instance = @cloud.describe_instances(db.first.id).first
+
+      # ensure creating the instance populated the two missing fields.
+      assert_equal instance[:provider], 'YAML'
+      assert_equal instance[:platform], Rubber::Platforms::LINUX
     end
 
     context 'describe_instances' do
