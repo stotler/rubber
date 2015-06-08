@@ -1,36 +1,42 @@
 require File.expand_path(File.join(__FILE__, '../..', 'test_helper'))
 require 'rubber/cloud/yaml'
 
-# NOTE: Must re-record one at a time for any test that invokes create_instance.
-# This is true until we allow povisioning arbitrarily, or if you expect the instances list to
-# be empty.
 class YAMLTest < Test::Unit::TestCase
   context 'yaml' do
     setup do
-      @dbfile = "/tmp/#{SecureRandom.uuid}"
-      # env = {
-      #   'database' => @dbfile,
-      # }
+      ENV["YAML_DATABASE"] = "/tmp/#{SecureRandom.uuid}"
 
-      env = Rubber::Configuration::Environment::BoundEnv.new(env, nil, nil, nil)
+      env = Rubber::Configuration::Environment::BoundEnv.new({}, nil, nil, nil)
       @cloud = Rubber::Cloud::YAML.new(env, nil)
     end
 
     teardown do
-      FileUtils.rm(@dbfile)
+      FileUtils.rm_f(ENV.delete("YAML_DATABASE"))
     end
 
     should 'create instance' do
-      assert @cloud.create_instance('', '', '', '', '', '')
+      db = [
+        Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
+      ]
+
+      Rubber::Cloud::YAML.dump_database(db, ENV["YAML_DATABASE"])
+
+      assert_equal db.first.id, @cloud.create_instance('', '', '', '', '', '')
     end
 
     context 'describe_instances' do
       should 'be able to describe all instances if no instance id is provided' do
-        # create an instance
-        assert @cloud.create_instance('', '', '', '', '', '')
+        db = [
+          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
+          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil),
+          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil),
+        ]
+
+        # Load DB.
+        Rubber::Cloud::YAML.dump_database(db, ENV["YAML_DATABASE"])
 
         instances = @cloud.describe_instances
-        assert_equal 1, instances.count
+        assert_equal 2, instances.count
       end
 
       should 'return empty array if no instances' do
@@ -42,16 +48,23 @@ class YAMLTest < Test::Unit::TestCase
         exception = assert_raises(StandardError)do
           assert @cloud.describe_instances("0000")
         end
+
         assert "Worker 0000 doesn't exist", exception.message
       end
 
       should 'return just information about the requested instance' do
+        db = [
+          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
+        ]
+
+        Rubber::Cloud::YAML.dump_database(db, ENV["YAML_DATABASE"])
+
         # create an instance
         instance_id = @cloud.create_instance('', '', '', '', '', '')
 
-        instances = @cloud.describe_instances
+        instances = @cloud.describe_instances(instance_id)
 
-        assert_equal Integer(instance_id, 10), instances.first[:id]
+        assert_equal 1, instances.length
       end
     end
   end

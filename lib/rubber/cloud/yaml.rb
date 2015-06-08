@@ -5,10 +5,9 @@ module Rubber
   module Cloud
     # YAML file containing a set of servers available for use.
     class YAML < Base
-      PROVIDER = 'YAML'.freeze
       AVAILABLE = 'available'.freeze
       ACTIVE = 'running'.freeze
-      STOPPED = 'stopped'.freeze
+      STOPPED = 'stopped'.freeze # not actually used just defined to implement the cloud interface
 
       def database_file
         ENV["YAML_DATABASE"]
@@ -23,58 +22,85 @@ module Rubber
       end
 
       def create_instance(instance_alias, image_name, image_type, security_groups, availability_zone, datacenter)
-        instance = database.select(&find_by_datacenter).find(&find_by_state(AVAILABLE))
-        return nil if instance.nil?
+        instances = db = self.class.load_database(database_file)
+
+        if datacenter.length > 0
+          instances = db.select(&find_by_datacenter(datacenter))
+        end
+
+        instance = instances.find(&find_by_states(AVAILABLE))
+
+        raise StandardError.new("No Servers Available") if instance.nil?
 
         instance.state = ACTIVE
 
-        dump_database
+        self.class.dump_database(db, database_file)
 
         instance.id
       end
 
       def describe_instances(instance_id=nil)
-        # sanity guard in case someone defined a server without an id.
-        return nil if instance_id.nil?
+        instances = self.class.load_database(database_file).select(&find_by_states(ACTIVE, STOPPED))
+        if instance_id
+          instances = instances.select(&find_by_uuid(instance_id))
+          if instances.empty?
+            raise StandardError.new("No Server Matches ID")
+          end
 
-        instance = database.find(&find_by_uuid(instance_id)).dup
+          if instances.count > 1
+            raise StandardError.new("Found more than 1 server with given ID")
+          end
+        end
 
-        instance.provider = PROVIDER
-        instance.platform = Rubber::Platforms::LINUX
+        instances.collect do |instance|
+          instance.provider = self.class.name.split('::').last
+          instance.platform = Rubber::Platforms::LINUX
 
-        instance.to_h
+          # convert to hash to match interface
+          instance.to_h
+        end
       end
 
       def destroy_instance(instance_id)
-        instance = database.find(&find_by_uuid(instance_id))
+        db = self.class.load_database(database_file)
+        instance = db.find(&find_by_uuid(instance_id))
         return if instance.nil?
 
         # Mark the instance as available again.
         instance.state = AVAILABLE
 
-        dump_database
+        self.class.dump_database(db, database_file)
       end
 
-      private
+      class Instance < Struct.new(:id, :state, :datacenter, :external_ip, :internal_ip, :platform, :provider)
+        def initialize(id, state, datacenter, external_ip, internal_ip, platform, prodiver)
+          super(id, state || AVAILABLE, datacenter, external_ip, internal_ip, platform, provider)
+        end
+      end
 
-      def dump_database
-        File.open(database_file + ".tmp") do |f|
-          f.write(YAML.dump(database))
+      #private
+
+      def self.dump_database(database, database_file)
+        File.open(database_file + ".tmp", "w") do |f|
+          f.write(::YAML.dump(database))
         end
 
-        FileUtils.mv(database_file, database_file + ".bak")
+        if File.exists?(database_file)
+          FileUtils.mv(database_file, database_file + ".bak")
+        end
+
         FileUtils.mv(database_file + ".tmp", database_file)
       end
 
-      def database
-        @database ||= (YAML.load(File.open(database_file)) || [])
+      def self.load_database(file)
+        @database = (::YAML.load(File.open(file)) || [])
       # create an empty db if the file doesn't exist.
       rescue Errno::ENOENT => e
         @database = []
       end
 
-      def find_by_state(state)
-        lambda { |i| i.state == state }
+      def find_by_states(*states)
+        lambda { |i| states.include?(i.state) }
       end
 
       def find_by_datacenter(datacenter)
@@ -85,8 +111,6 @@ module Rubber
       def find_by_uuid(id)
         lambda { |i| i.id == id }
       end
-
-      class Instance < Struct.new(:id, :state, :datacenter, :external_ip, :internal_ip, :platform, :provider); end
     end
   end
 end
