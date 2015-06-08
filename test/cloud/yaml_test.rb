@@ -19,7 +19,7 @@ class YAMLTest < Test::Unit::TestCase
         Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
       ]
 
-      Rubber::Cloud::YAML.dump_database(db, ENV["YAML_DATABASE"])
+      Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
 
       assert_equal db.first.id, @cloud.create_instance('', '', '', '', '', '')
     end
@@ -33,7 +33,7 @@ class YAMLTest < Test::Unit::TestCase
         ]
 
         # Load DB.
-        Rubber::Cloud::YAML.dump_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
 
         instances = @cloud.describe_instances
         assert_equal 2, instances.count
@@ -58,7 +58,7 @@ class YAMLTest < Test::Unit::TestCase
           Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
         ]
 
-        Rubber::Cloud::YAML.dump_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
 
         assert_equal 0, @cloud.describe_instances.count
 

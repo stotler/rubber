@@ -34,7 +34,7 @@ module Rubber
 
         instance.state = ACTIVE
 
-        self.class.dump_database(db, database_file)
+        self.class.persist_database(db, database_file)
 
         instance.id
       end
@@ -69,7 +69,7 @@ module Rubber
         # Mark the instance as available again.
         instance.state = AVAILABLE
 
-        self.class.dump_database(db, database_file)
+        self.class.persist_database(db, database_file)
       end
 
       class Instance < Struct.new(:id, :state, :datacenter, :external_ip, :internal_ip, :platform, :provider)
@@ -80,7 +80,7 @@ module Rubber
 
       #private
 
-      def self.dump_database(database, database_file)
+      def self.persist_database(database, database_file)
         File.open(database_file + ".tmp", "w") do |f|
           f.write(::YAML.dump(database))
         end
