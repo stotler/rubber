@@ -4,6 +4,8 @@ require 'yaml/store'
 module Rubber
   module Cloud
     # YAML file containing a set of servers available for use.
+    # Implements the rubber's provisioner interface
+    # create_instance, describe_instances, destroy_instance
     class YAML < Base
       AVAILABLE = 'available'.freeze
       ACTIVE = 'running'.freeze
@@ -21,7 +23,16 @@ module Rubber
         STOPPED
       end
 
-      def create_instance(instance_alias, image_name, image_type, security_groups, availability_zone, datacenter)
+      # Marks an instance as ACTIVE within the database file.
+      # Arguments beginning with _ are ignored by this method.
+      # @param [String] _instance_alias  (Ignored) - the alias of the instance being created.
+      # @param [String] _image_name (Ignored) - the name of the base machine image to use.
+      # @param [String] _image_type (Ignored) - the type of machine to create (i.e. hardware specs)
+      # @param [Array]  _security_groups (Ignored) - the security groups to apply to the machine.
+      # @param [String] _availability_zone (Ignored) - the availability zone to create the server within.
+      # @param [String] datacenter - the data center to create the server within.
+      # @return [String] id of the created machine.
+      def create_instance(_instance_alias, _image_name, _image_type, _security_groups, _availability_zone, datacenter)
         instances = db = self.class.load_database(database_file)
 
         if datacenter.length > 0
@@ -39,6 +50,9 @@ module Rubber
         instance.id
       end
 
+      # Returns information about the currently provisioned servers.
+      # @param [String] instance_id - describe the specific instance for the provided id.
+      # @return [Hash]
       def describe_instances(instance_id=nil)
         instances = self.class.load_database(database_file).select(&find_by_states(ACTIVE, STOPPED))
         if instance_id
@@ -61,6 +75,8 @@ module Rubber
         end
       end
 
+      # Marks the machine with the given id as available. if the instance does not exist,
+      # just return.
       def destroy_instance(instance_id)
         db = self.class.load_database(database_file)
         instance = db.find(&find_by_uuid(instance_id))
