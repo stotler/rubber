@@ -37,6 +37,7 @@ class YAMLTest < Test::Unit::TestCase
 
         instances = @cloud.describe_instances
         assert_equal 2, instances.count
+        refute instances.collect{|hash| hash[:id]}.include?(db.last.id)
       end
 
       should 'return empty array if no instances' do
@@ -59,12 +60,17 @@ class YAMLTest < Test::Unit::TestCase
 
         Rubber::Cloud::YAML.dump_database(db, ENV["YAML_DATABASE"])
 
+        assert_equal 0, @cloud.describe_instances.count
+
         # create an instance
         instance_id = @cloud.create_instance('', '', '', '', '', '')
 
         instances = @cloud.describe_instances(instance_id)
 
-        assert_equal 1, instances.length
+        assert_equal 1, instances.count
+        [:id, :datacenter, :external_ip, :internal_ip].each do |attr|
+          assert_equal db.first.send(attr), instances.first[attr]
+        end
       end
     end
   end
