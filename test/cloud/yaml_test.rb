@@ -113,6 +113,27 @@ class YAMLTest < Test::Unit::TestCase
 
         assert_equal 1, @cloud.describe_instances.count
       end
+
+      should 'error if destroy is called on an available server' do
+        active = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil)
+        stopped = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil)
+        available = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil)
+
+        db = [active, stopped, available]
+
+        # Load DB.
+        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
+
+        assert_equal 2, @cloud.describe_instances.count
+
+        exception = assert_raises(StandardError)do
+          @cloud.destroy_instance(available.id)
+        end
+
+        assert "No Server Matches ID", exception.message
+
+        assert_equal 2, @cloud.describe_instances.count
+      end
     end
   end
 end

@@ -79,8 +79,8 @@ module Rubber
       # just return.
       def destroy_instance(instance_id)
         db = self.class.load_database(database_file)
-        instance = db.find(&find_by_uuid(instance_id))
-        return if instance.nil?
+        instance = db.select(&find_by_states(ACTIVE, STOPPED)).find(&find_by_uuid(instance_id))
+        raise StandardError.new("No Server Matches ID") if instance.nil?
 
         # Mark the instance as available again.
         instance.state = AVAILABLE
