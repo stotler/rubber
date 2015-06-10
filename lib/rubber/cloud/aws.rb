@@ -452,7 +452,9 @@ module Rubber
 
             # convert the special case default rule into what it actually looks like when
             # we query ec2 so that we can match things up when syncing
-            rules = group['rules'].clone
+            rules = group['rules'].clone\
+            # Make sure rule source ips are in sorted order so we can delete them properly from the rules.
+            rules.each{ |r| r["source_ips"].kind_of?(Array) && r["source_ips"].sort! }
             group['rules'].each do |rule|
               if [2, 3].include?(rule.size) && rule['source_group_name'] && rule['source_group_account']
                 rules << rule.merge({'protocol' => 'tcp', 'from_port' => '1', 'to_port' => '65535' })
@@ -467,6 +469,8 @@ module Rubber
             # first collect the rule maps from the request (group/user pairs are duplicated for tcp/udp/icmp,
             # so we need to do this up frnot and remove duplicates before checking against the local rubber rules)
             cloud_group[:permissions].each do |rule|
+              # Make sure rule source ips are in sorted order so we can delete them properly from the rules.
+              rule[:source_ips].kind_of?(Array) && rule[:source_ips].sort!
               source_groups = rule.delete(:source_groups)
               if source_groups
                 source_groups.each do |source_group|
