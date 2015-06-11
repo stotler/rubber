@@ -35,7 +35,7 @@ module Rubber
       def create_instance(_instance_alias, _image_name, _image_type, _security_groups, _availability_zone, datacenter)
         instances = db = self.class.load_database(database_file)
 
-        if datacenter.length > 0
+        if datacenter && datacenter.length > 0
           instances = db.select(&find_by_datacenter(datacenter))
         end
 

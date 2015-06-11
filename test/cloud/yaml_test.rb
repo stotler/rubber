@@ -14,19 +14,36 @@ class YAMLTest < Test::Unit::TestCase
       FileUtils.rm_f(ENV.delete("YAML_DATABASE"))
     end
 
-    should 'create instance' do
-      db = [
-        Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
-      ]
+    context 'create_instance' do
+      should 'create instance' do
+        db = [
+          Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
+        ]
 
-      Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
 
-      assert_equal db.first.id, @cloud.create_instance('', '', '', '', '', '')
-      instance = @cloud.describe_instances(db.first.id).first
+        assert_equal db.first.id, @cloud.create_instance('', '', '', '', '', '')
+        instance = @cloud.describe_instances(db.first.id).first
 
-      # ensure creating the instance populated the two missing fields.
-      assert_equal instance[:provider], 'Yaml'
-      assert_equal instance[:platform], Rubber::Platforms::LINUX
+        # ensure creating the instance populated the two missing fields.
+        assert_equal instance[:provider], 'Yaml'
+        assert_equal instance[:platform], Rubber::Platforms::LINUX
+      end
+
+      should 'handle nil datacenter' do
+        db = [
+          Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, nil, '127.0.0.1', '10.0.0.1', nil, nil),
+        ]
+
+        Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
+
+        assert_equal db.first.id, @cloud.create_instance('', '', '', '', '', nil)
+        instance = @cloud.describe_instances(db.first.id).first
+
+        # ensure creating the instance populated the two missing fields.
+        assert_equal instance[:provider], 'Yaml'
+        assert_equal instance[:platform], Rubber::Platforms::LINUX
+      end
     end
 
     context 'describe_instances' do
