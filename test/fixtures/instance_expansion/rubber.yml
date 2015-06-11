@@ -1,1 +1,4 @@
 var1: "#{rubber_instances.for_role('role1').first.external_ip}"
+hosts:
+  host1:
+    test_var: "foo!"
