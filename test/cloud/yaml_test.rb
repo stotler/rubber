@@ -7,7 +7,7 @@ class YAMLTest < Test::Unit::TestCase
       ENV["YAML_DATABASE"] = "/tmp/#{SecureRandom.uuid}"
 
       env = Rubber::Configuration::Environment::BoundEnv.new({}, nil, nil, nil)
-      @cloud = Rubber::Cloud::YAML.new(env, nil)
+      @cloud = Rubber::Cloud::Yaml.new(env, nil)
     end
 
     teardown do
@@ -16,29 +16,29 @@ class YAMLTest < Test::Unit::TestCase
 
     should 'create instance' do
       db = [
-        Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
+        Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
       ]
 
-      Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
+      Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
 
       assert_equal db.first.id, @cloud.create_instance('', '', '', '', '', '')
       instance = @cloud.describe_instances(db.first.id).first
 
       # ensure creating the instance populated the two missing fields.
-      assert_equal instance[:provider], 'YAML'
+      assert_equal instance[:provider], 'Yaml'
       assert_equal instance[:platform], Rubber::Platforms::LINUX
     end
 
     context 'describe_instances' do
       should 'be able to describe all instances if no instance id is provided' do
         db = [
-          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
-          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil),
-          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil),
+          Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
+          Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil),
+          Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil),
         ]
 
         # Load DB.
-        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
 
         instances = @cloud.describe_instances
         assert_equal 2, instances.count
@@ -60,10 +60,10 @@ class YAMLTest < Test::Unit::TestCase
 
       should 'return just information about the requested instance' do
         db = [
-          Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
+          Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil),
         ]
 
-        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
 
         assert_equal 0, @cloud.describe_instances.count
 
@@ -81,14 +81,14 @@ class YAMLTest < Test::Unit::TestCase
 
     context 'destroy instance' do
       should 'update the database for a running server from running to available' do
-        active = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil)
-        stopped = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil)
-        available = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil)
+        active = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil)
+        stopped = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil)
+        available = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil)
 
         db = [active, stopped, available]
 
         # Load DB.
-        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
 
         assert_equal 2, @cloud.describe_instances.count
 
@@ -98,14 +98,14 @@ class YAMLTest < Test::Unit::TestCase
       end
 
       should 'update the database for a running server from stopped to available' do
-        active = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil)
-        stopped = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil)
-        available = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil)
+        active = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil)
+        stopped = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil)
+        available = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil)
 
         db = [active, stopped, available]
 
         # Load DB.
-        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
 
         assert_equal 2, @cloud.describe_instances.count
 
@@ -115,14 +115,14 @@ class YAMLTest < Test::Unit::TestCase
       end
 
       should 'error if destroy is called on an available server' do
-        active = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil)
-        stopped = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil)
-        available = Rubber::Cloud::YAML::Instance.new(SecureRandom.uuid, Rubber::Cloud::YAML::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil)
+        active = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::ACTIVE, 'dc0', '127.0.0.1', '10.0.0.1', nil, nil)
+        stopped = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::STOPPED, 'dc1', '127.0.0.2', '10.0.0.2', nil, nil)
+        available = Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, 'dc1', '127.0.0.3', '10.0.0.3', nil, nil)
 
         db = [active, stopped, available]
 
         # Load DB.
-        Rubber::Cloud::YAML.persist_database(db, ENV["YAML_DATABASE"])
+        Rubber::Cloud::Yaml.persist_database(db, ENV["YAML_DATABASE"])
 
         assert_equal 2, @cloud.describe_instances.count
 

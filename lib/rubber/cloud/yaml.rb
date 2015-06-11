@@ -6,7 +6,7 @@ module Rubber
     # YAML file containing a set of servers available for use.
     # Implements the rubber's provisioner interface
     # create_instance, describe_instances, destroy_instance
-    class YAML < Base
+    class Yaml < Base
       AVAILABLE = 'available'.freeze
       ACTIVE = 'running'.freeze
       STOPPED = 'stopped'.freeze # not actually used just defined to implement the cloud interface
