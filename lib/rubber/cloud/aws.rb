@@ -452,7 +452,7 @@ module Rubber
 
             # convert the special case default rule into what it actually looks like when
             # we query ec2 so that we can match things up when syncing
-            rules = group['rules'].clone\
+            rules = group['rules'].clone
             # Make sure rule source ips are in sorted order so we can delete them properly from the rules.
             rules.each{ |r| r["source_ips"].kind_of?(Array) && r["source_ips"].sort! }
             group['rules'].each do |rule|
