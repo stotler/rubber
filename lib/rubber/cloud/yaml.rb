@@ -1,6 +1,15 @@
 require 'rubber/cloud/generic'
 require 'yaml/store'
-
+require 'rubber/cloud/yaml'
+# Example) inserting an entry into the YAML database.
+# db = Rubber::Cloud::Yaml.load_database('baremetal/database.yml')
+# db = %w(10.30.150.12).reduce(db) do |db, ip|
+#   db << Rubber::Cloud::Yaml::Instance.new(SecureRandom.uuid, Rubber::Cloud::Yaml::AVAILABLE, nil, ip, ip, nil, nil)
+# end;
+# Rubber::Cloud::Yaml.persist_database(db, 'baremetal/database.yml')
+#
+# Example) creating an instance from the database.
+# RUBBER_ENV={env} CLOUD_PROVIDER=yaml YAML_DATABASE=baremetal/database.yml cap rubber:create ALIAS={alias}
 module Rubber
   module Cloud
     # YAML file containing a set of servers available for use.
