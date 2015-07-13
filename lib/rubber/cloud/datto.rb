@@ -17,7 +17,9 @@ module Rubber
       end
 
       def create_instance(instance_alias, image_name, image_type, security_groups, availability_zone, datacenter)
-        response = HttpAdapter.post(uri_builder)
+        response = HttpAdapter.post(uri_builder,
+          :body => { :location => availability_zone, :type => image_type }.to_json,
+          :headers => { 'Content-Type' => 'application/json', 'Accept' => 'application/json' } )
         puts "API RESPONSE #{response.code}: #{response.body}"
         if !successful?(response)
           raise err_from_response(response)
@@ -91,6 +93,7 @@ module Rubber
 
       class HttpAdapter
         include ::HTTParty
+        #debug_output $stdout
         format(:json)
         read_timeout(240)
       end
