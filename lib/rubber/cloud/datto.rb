@@ -17,16 +17,15 @@ module Rubber
       end
 
       def create_instance(instance_alias, image_name, image_type, security_groups, availability_zone, datacenter)
-        response = HTTParty.post(uri_builder,
-          :body => { :location => "#{availability_zone}", :type => "#{image_type}" }.to_json,
-          :headers => { 'Content-Type' => 'application/json' } )
+        response = HttpAdapter.post(uri_builder,
+          :body => { :location => availability_zone, :type => image_type }.to_json,
+          :headers => { 'Content-Type' => 'application/json', 'Accept' => 'application/json' } )
         puts "API RESPONSE #{response.code}: #{response.body}"
         if !successful?(response)
           raise err_from_response(response)
         end
 
         response["id"]
-        #PROBLEM:  The id ends up being sotred in instances-production as literal "id" (including double quotes) instead of the integer
       end
 
       def describe_instances(instance_id=nil)
@@ -94,6 +93,7 @@ module Rubber
 
       class HttpAdapter
         include ::HTTParty
+        #debug_output $stdout
         format(:json)
         read_timeout(240)
       end
