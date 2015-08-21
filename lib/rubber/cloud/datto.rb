@@ -93,9 +93,9 @@ module Rubber
 
       class HttpAdapter
         include ::HTTParty
-        #debug_output $stdout
+        debug_output $stdout
         format(:json)
-        read_timeout(240)
+        read_timeout(600)
       end
     end
   end
