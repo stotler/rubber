@@ -95,7 +95,7 @@ module Rubber
         include ::HTTParty
         debug_output $stdout
         format(:json)
-        read_timeout(600)
+        read_timeout(900)
       end
     end
   end
